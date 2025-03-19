@@ -15,10 +15,6 @@ A comprehensive system that leverages Large Language Models (LLMs) for automated
 - [System Architecture](#-system-architecture)
 - [Installation](#-installation)
 - [Usage Guide](#-usage-guide)
-- [Key Components](#-key-components)
-- [Implementation Challenges & Solutions](#-implementation-challenges--solutions)
-- [Metrics & Business Impact](#-metrics--business-impact)
-- [Future Roadmap](#-future-roadmap)
 
 ---
 
@@ -76,6 +72,33 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/username/advanced-text-annotation.git
-cd advanced-text-annotation
+cd advanced-text-annotation bash   
 
-Create and activate a virtual environment:
+```
+Steps to install and activate - 
+
+``` bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+streamlit run Data_Annotation/dashboard/app.py
+```
+
+## 🚀 Usage Guide
+###Annotating Documents
+  1 - Navigate to the "Document Annotation" page in the dashboard
+  2 - Enter your document text in the input area
+  3 - Select the entity types you want to extract (e.g., PATIENT, DATE, DOCTOR)
+  4 - Click "Annotate Document" to process the text
+  5 - Review extracted entities and their validation status
+
+###Human Review Process
+ - Click "Begin Human Review" for documents needing review
+ - Verify the document and choose a review option:
+   - Review and correct flagged entities
+   - Add missing entities
+   - Accept all entities as-is
+ - Modify, delete, or add entities with context provided
+ - Submit the review to finalize corrections
+
+
