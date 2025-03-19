@@ -81,26 +81,93 @@ def _get_entity_context(document_text: str, entity: Dict[str, Any], context_size
         
     return context
 
-def calculate_correction_impact(original_entities: List[Dict], corrected_entities: List[Dict]) -> Dict[str, int]:
-    """
-    Calculate the impact of corrections on a set of entities.
+def calculate_correction_impact(original_entities, corrected_entities):
+    """Calculate the impact of corrections with improved entity modification detection."""
+    # Track matched entities to avoid double-counting
+    matched_orig = set()
+    matched_corr = set()
+    modified = 0
     
-    Args:
-        original_entities: List of original entity dictionaries
-        corrected_entities: List of corrected entity dictionaries
+    # Step 1: Match by position first (exact same position)
+    orig_by_pos = {(e.get("start", 0), e.get("end", 0)): i for i, e in enumerate(original_entities)}
+    corr_by_pos = {(e.get("start", 0), e.get("end", 0)): i for i, e in enumerate(corrected_entities)}
+    
+    for pos, orig_idx in orig_by_pos.items():
+        if pos in corr_by_pos:
+            corr_idx = corr_by_pos[pos]
+            # Check if content changed despite same position
+            orig = original_entities[orig_idx]
+            corr = corrected_entities[corr_idx]
+            if (orig.get("type") != corr.get("type") or orig.get("text") != corr.get("text")):
+                modified += 1
+            
+            # Mark as matched to avoid recounting
+            matched_orig.add(orig_idx)
+            matched_corr.add(corr_idx)
+    
+    # Step 2: Try to match by type and text
+    for i, orig in enumerate(original_entities):
+        if i in matched_orig:
+            continue
+            
+        orig_type = orig.get("type", "")
+        orig_text = orig.get("text", "")
         
-    Returns:
-        Dictionary with impact statistics
-    """
-    # Track by text+type pairs rather than position
-    orig_entities = {(e["type"], e["text"]): e for e in original_entities}
-    corr_entities = {(e["type"], e["text"]): e for e in corrected_entities}
+        for j, corr in enumerate(corrected_entities):
+            if j in matched_corr:
+                continue
+                
+            corr_type = corr.get("type", "")
+            corr_text = corr.get("text", "")
+            
+            # Check if same type with similar text
+            if orig_type == corr_type:
+                # Different comparison strategies based on entity type
+                if orig_type in ["DOSAGE", "MED", "DATE"]:
+                    # For dosage, medication, dates - check if one text contains the other
+                    if (orig_text in corr_text or corr_text in orig_text or
+                            similar_text(orig_text, corr_text)):
+                        modified += 1
+                        matched_orig.add(i)
+                        matched_corr.add(j)
+                        break
+                else:
+                    # For other types, look for position proximity
+                    orig_start = orig.get("start", 0)
+                    corr_start = corr.get("start", 0)
+                    
+                    # If positions are reasonably close (within 50 chars)
+                    if abs(orig_start - corr_start) <= 50:
+                        modified += 1
+                        matched_orig.add(i)
+                        matched_corr.add(j)
+                        break
     
-    # Calculate statistics
-    shared_keys = orig_entities.keys() & corr_entities.keys()
-    added = len(corr_entities) - len(shared_keys)
-    removed = len(orig_entities) - len(shared_keys)
-    modified = sum(1 for k in shared_keys if orig_entities[k] != corr_entities[k])
+    # Step 3: Try to match by overlapping positions
+    for i, orig in enumerate(original_entities):
+        if i in matched_orig:
+            continue
+            
+        orig_start = orig.get("start", 0)
+        orig_end = orig.get("end", 0)
+        
+        for j, corr in enumerate(corrected_entities):
+            if j in matched_corr:
+                continue
+                
+            corr_start = corr.get("start", 0)
+            corr_end = corr.get("end", 0)
+            
+            # Check for position overlap
+            if (orig_start <= corr_end and corr_start <= orig_end):
+                modified += 1
+                matched_orig.add(i)
+                matched_corr.add(j)
+                break
+    
+    # Calculate remaining counts
+    added = len(corrected_entities) - len(matched_corr)
+    removed = len(original_entities) - len(matched_orig)
     
     return {
         "original_count": len(original_entities),
@@ -109,3 +176,42 @@ def calculate_correction_impact(original_entities: List[Dict], corrected_entitie
         "added": added,
         "removed": removed
     }
+
+def similar_text(text1, text2):
+    """Helper function to check if texts are similar enough to be the same entity."""
+    # Check for common words
+    words1 = set(text1.lower().split())
+    words2 = set(text2.lower().split())
+    common_words = words1.intersection(words2)
+    
+    # If they share at least half of their words, consider them similar
+    return len(common_words) >= min(len(words1), len(words2)) / 2
+
+# def calculate_correction_impact(original_entities: List[Dict], corrected_entities: List[Dict]) -> Dict[str, int]:
+#     """
+#     Calculate the impact of corrections on a set of entities.
+    
+#     Args:
+#         original_entities: List of original entity dictionaries
+#         corrected_entities: List of corrected entity dictionaries
+        
+#     Returns:
+#         Dictionary with impact statistics
+#     """
+#     # Track by text+type pairs rather than position
+#     orig_entities = {(e["type"], e["text"]): e for e in original_entities}
+#     corr_entities = {(e["type"], e["text"]): e for e in corrected_entities}
+    
+#     # Calculate statistics
+#     shared_keys = orig_entities.keys() & corr_entities.keys()
+#     added = len(corr_entities) - len(shared_keys)
+#     removed = len(orig_entities) - len(shared_keys)
+#     modified = sum(1 for k in shared_keys if orig_entities[k] != corr_entities[k])
+    
+#     return {
+#         "original_count": len(original_entities),
+#         "corrected_count": len(corrected_entities),
+#         "modified": modified,
+#         "added": added,
+#         "removed": removed
+#     }

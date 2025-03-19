@@ -395,3 +395,21 @@ if __name__ == "__main__":
     print(f"Auto-approved: {stats['auto_approved']} ({stats['auto_approval_rate']*100:.1f}%)")
     print(f"Needs review: {stats['needs_review']}")
     print(f"Total corrections: {stats['total_corrections']}")
+
+
+# Patient Maria Garcia (DOB: 11/23/1982) was admitted on February 15, 2024, with 
+# complaints of severe headache. Dr. James Wilson ordered a CT scan and blood panel. 
+# Results showed normal CT findings and elevated WBC count of 11.2 K/μL. Patient was prescribed 
+# Sumatriptan 50mg as needed and Ibuprofen 800mg three times daily.
+
+
+# Patient Robert Johnson (DOB: 06/30/1968) was admitted on March 8, 2024, with 
+# complaints of lower back pain. Dr. Sarah Ahmed ordered an MRI and urine analysis. 
+# Results showed mild disc bulging at L4-L5 and normal urinalysis. Patient was prescribed 
+# Cyclobenzaprine 10mg at bedtime and Naproxen 500mg twice daily.
+
+
+# Patient Jennifer Wong (DOB: 09/12/1991) was admitted on February 27, 2024, with 
+# complaints of persistent cough. Dr. Michael Rivera ordered a chest X-ray and sputum culture. 
+# Results showed mild bronchial inflammation and negative bacterial growth. Patient was prescribed 
+# Azithromycin 500mg once daily for 3 days and Benzonatate 200mg three times daily.
